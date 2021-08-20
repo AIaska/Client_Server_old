@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-class Log
+class Logger
 {
 public:
     static void to_console(std::string msg)

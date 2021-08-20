@@ -18,30 +18,23 @@
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
 
-#define DEFAULT_BUFLEN 512 // to do move to ctor-s
+#define DEFAULT_BUFLEN 512 // will be read from config
 #define DEFAULT_PORT "27015"
 
 #endif
-
-// TO DO comment on usage (init -> listen -> connect etc)
 
 class SocketHelper
 {
 #ifdef _WIN64
 
-
+public:
+	SocketHelper() {};
+	virtual ~SocketHelper() {};
 
 protected:
-	WSADATA wsaData; // del structure contains information about the Windows Sockets implementation
-	int iResult = 0;
-	struct addrinfo* result = nullptr; // to do smart ptrs everywhere
+	WSADATA wsaData; // info about the Windows Sockets implementation
+	struct addrinfo* result = nullptr;
 	struct addrinfo hints;
-	char recvbuf[DEFAULT_BUFLEN];
-	int recvbuflen = DEFAULT_BUFLEN; // to do change type
-
-public:
-
-
 
 #endif
 };
@@ -59,11 +52,12 @@ public:
 	ServerSocketHelper();
 	~ServerSocketHelper();
 
-	bool Initialize();
-	bool Listen();
+	int Initialize();
+	int Listen();
 	bool Accept();
-	bool Receive();
-	bool Shutdown();
+	int Receive();
+	bool Send(char bufData[DEFAULT_BUFLEN], int iResult);
+	int Shutdown();
 
 #endif
 };
@@ -75,17 +69,17 @@ class ClientSocketHelper : private SocketHelper
 private:
 	SOCKET ConnectSocket = INVALID_SOCKET;
 	struct addrinfo* ptr = nullptr;
-	const char* sendbuf = "this is a test";
+	const std::string sendbuf = "this is a test";
 
 public:
 	ClientSocketHelper();
 	~ClientSocketHelper();
 
-	bool Initialize(const char* ip_adr);
-	bool Connect();
-	bool Send();
-	bool Shutdown();
-	void Receive();
+	int Initialize(const char* ip_adr);
+	int Connect();
+	int Send();
+	void Receive();	
+	int Shutdown();
 
 #endif
 };

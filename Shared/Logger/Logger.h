@@ -1,4 +1,4 @@
-#pragma once // TO DO can we use pragma or should we use ifdef-s ?
+#pragma once
 
 #include <iostream>
 #include <string>

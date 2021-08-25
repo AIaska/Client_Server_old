@@ -1,4 +1,6 @@
-#include "../Shared/Socket_utils/SocketHelper.h" 
+#ifdef _WIN64
+#include "../Shared/Socket_utils/SocketHelper_wnd.h"
+#endif
 
 int main(int argc, char** argv)
 {

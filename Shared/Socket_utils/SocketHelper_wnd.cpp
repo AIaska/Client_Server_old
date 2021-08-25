@@ -1,6 +1,4 @@
-#include "SocketHelper.h"
-
-#ifdef _WIN64
+#include "SocketHelper_wnd.h"
 
 ServerSocketHelper::ServerSocketHelper()
 {
@@ -342,5 +340,3 @@ int ClientSocketHelper::Shutdown()
 		std::cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
 	}
 }
-
-#endif

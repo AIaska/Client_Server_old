@@ -1,5 +1,5 @@
 #ifdef _WIN64
-#include "../Shared/Socket_utils/SocketHelper_wnd.h"
+#include "../shared/socket_utils/socket_helper_wnd.h"
 #endif
 
 int main(int argc, char** argv)
@@ -9,9 +9,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    ClientSocketHelper socket_helper;
+    CClientSocketHelper socket_helper;
 
-    socket_helper.Initialize(argv[2]);
+    socket_helper.Init(argv[2]);
     socket_helper.Connect();
     socket_helper.Send();
     socket_helper.Shutdown();

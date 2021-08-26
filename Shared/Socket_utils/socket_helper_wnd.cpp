@@ -1,36 +1,36 @@
-#include "SocketHelper_wnd.h"
+#include "socket_helper_wnd.h"
 
-ServerSocketHelper::ServerSocketHelper()
+CServerSocketHelper::CServerSocketHelper()
 {
 
 }
 
-ServerSocketHelper::~ServerSocketHelper()
+CServerSocketHelper::~CServerSocketHelper()
 {
-	closesocket(ClientSocket);
+	closesocket(m_clientSocket);
 	WSACleanup();
 }
 
-int ServerSocketHelper::Initialize()
+int CServerSocketHelper::Init()
 {
 
 	try
 	{
-		// Initialize Winsock
+		// Init Winsock
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (iResult != 0) {
 			std::cout << "WSAStartup failed with error: %d\n" << iResult << "\n";
 			return iResult;
 		}
 
-		SecureZeroMemory(&hints, sizeof(hints));
-		hints.ai_family = AF_INET;
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_protocol = IPPROTO_TCP;
-		hints.ai_flags = AI_PASSIVE;
+		SecureZeroMemory(&m_hints, sizeof(m_hints));
+		m_hints.ai_family = AF_INET;
+		m_hints.ai_socktype = SOCK_STREAM;
+		m_hints.ai_protocol = IPPROTO_TCP;
+		m_hints.ai_flags = AI_PASSIVE;
 
 		// Resolve the server address and port
-		iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+		iResult = getaddrinfo(NULL, DEFAULT_PORT, &m_hints, &m_pResult);
 		if (iResult != 0) {
 			std::cout << "getaddrinfo failed with error: " << iResult << "\n";
 			WSACleanup();
@@ -45,35 +45,35 @@ int ServerSocketHelper::Initialize()
 	}
 }
 
-int ServerSocketHelper::Listen()
+int CServerSocketHelper::Listen()
 {
 	try
 	{
 		// Create a SOCKET for connecting to server
-		ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-		if (ListenSocket == INVALID_SOCKET) {
+		m_listenSocket = socket(m_pResult->ai_family, m_pResult->ai_socktype, m_pResult->ai_protocol);
+		if (m_listenSocket == INVALID_SOCKET) {
 			std::cout << "socket failed with error: " << WSAGetLastError() << "\n";
-			freeaddrinfo(result);
+			freeaddrinfo(m_pResult);
 			WSACleanup();
 			return false;
 		}
 
 		// Setup the TCP listening socket
-		int iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
+		int iResult = bind(m_listenSocket, m_pResult->ai_addr, (int)m_pResult->ai_addrlen);
 		if (iResult == SOCKET_ERROR) {
 			std::cout << "bind failed with error: " << WSAGetLastError() << "\n";
-			freeaddrinfo(result);
-			closesocket(ListenSocket);
+			freeaddrinfo(m_pResult);
+			closesocket(m_listenSocket);
 			WSACleanup();
 			return iResult;
 		}
 
-		freeaddrinfo(result);
+		freeaddrinfo(m_pResult);
 
-		iResult = listen(ListenSocket, SOMAXCONN);
+		iResult = listen(m_listenSocket, SOMAXCONN);
 		if (iResult == SOCKET_ERROR) {
 			std::cout << "listen failed with error: " << WSAGetLastError() << "\n";
-			closesocket(ListenSocket);
+			closesocket(m_listenSocket);
 			WSACleanup();
 			return iResult;
 		}
@@ -86,21 +86,21 @@ int ServerSocketHelper::Listen()
 	}
 }
 
-bool ServerSocketHelper::Accept()
+bool CServerSocketHelper::Accept()
 {
 	try
 	{
 		// Permit an incoming connection attempt on a socket
-		ClientSocket = accept(ListenSocket, NULL, NULL);
-		if (ClientSocket == INVALID_SOCKET) {
+		m_clientSocket = accept(m_listenSocket, NULL, NULL);
+		if (m_clientSocket == INVALID_SOCKET) {
 			std::cout << "accept failed with error: " << WSAGetLastError() << "\n";
-			closesocket(ListenSocket);
+			closesocket(m_listenSocket);
 			WSACleanup();
 			return false;
 		}
 
 		// No longer need server socket
-		closesocket(ListenSocket); // TO DO check
+		closesocket(m_listenSocket); // TO DO check
 
 		return true;
 	}
@@ -110,7 +110,7 @@ bool ServerSocketHelper::Accept()
 	}
 }
 
-int ServerSocketHelper::Receive()
+int CServerSocketHelper::Receive()
 {
 	try
 	{
@@ -118,7 +118,7 @@ int ServerSocketHelper::Receive()
 		int iResult = 0;
 		char recvbuf[DEFAULT_BUFLEN];
 		do {
-			iResult = recv(ClientSocket, recvbuf, DEFAULT_BUFLEN, 0);
+			iResult = recv(m_clientSocket, recvbuf, DEFAULT_BUFLEN, 0);
 			if (iResult > 0) {
 				std::cout << "Bytes received: " << iResult << "\n";
 
@@ -129,7 +129,7 @@ int ServerSocketHelper::Receive()
 				printf("Connection closing...\n");
 			else {
 				std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
-				closesocket(ClientSocket);
+				closesocket(m_clientSocket);
 				WSACleanup();
 				return iResult;
 			}
@@ -144,19 +144,19 @@ int ServerSocketHelper::Receive()
 	}
 }
 
-bool ServerSocketHelper::Send(char bufData[DEFAULT_BUFLEN], int iResult)
+bool CServerSocketHelper::Send(char bufData[DEFAULT_BUFLEN], int iResult)
 {
 	try
 	{
-		iSendResult = send(ClientSocket, bufData, iResult, 0);
-		if (iSendResult == SOCKET_ERROR) {
+		m_iSendResult = send(m_clientSocket, bufData, iResult, 0);
+		if (m_iSendResult == SOCKET_ERROR) {
 			std::cout << "send failed with error: " << WSAGetLastError() << "\n";
-			closesocket(ClientSocket);
+			closesocket(m_clientSocket);
 			WSACleanup();
 			return false;
 		}
 
-		printf("Bytes sent: %d\n", iSendResult);
+		printf("Bytes sent: %d\n", m_iSendResult);
 		return true;
 	}
 	catch (const std::exception& ex)
@@ -165,15 +165,15 @@ bool ServerSocketHelper::Send(char bufData[DEFAULT_BUFLEN], int iResult)
 	}
 }
 
-int ServerSocketHelper::Shutdown()
+int CServerSocketHelper::Shutdown()
 {
 	try
 	{
 		// shutdown the connection since we're done
-		int iResult = shutdown(ClientSocket, SD_SEND);
+		int iResult = shutdown(m_clientSocket, SD_SEND);
 		if (iResult == SOCKET_ERROR) {
 			std::cout << "shuwdown failed with error: " << WSAGetLastError() << "\n";
-			closesocket(ClientSocket);
+			closesocket(m_clientSocket);
 			WSACleanup();
 			return iResult;
 		}
@@ -188,35 +188,35 @@ int ServerSocketHelper::Shutdown()
 
 //----------------------------------------------------------
 
-ClientSocketHelper::ClientSocketHelper()
+CClientSocketHelper::CClientSocketHelper()
 {
 
 }
 
-ClientSocketHelper::~ClientSocketHelper()
+CClientSocketHelper::~CClientSocketHelper()
 {
-	closesocket(ConnectSocket);
+	closesocket(m_connectSocket);
 	WSACleanup();
 }
 
-int ClientSocketHelper::Initialize(const char* ip_adr)
+int CClientSocketHelper::Init(const char* ip_adr)
 {
 	try
 	{
-		// Initialize Winsock
+		// Init Winsock
 		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (iResult != 0) {
 			std::cout << "WSAStartup failed with error: " << iResult << "\n";
 			return iResult;
 		}
 
-		SecureZeroMemory(&hints, sizeof(hints));
-		hints.ai_family = AF_UNSPEC;
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_protocol = IPPROTO_TCP;
+		SecureZeroMemory(&m_hints, sizeof(m_hints));
+		m_hints.ai_family = AF_UNSPEC;
+		m_hints.ai_socktype = SOCK_STREAM;
+		m_hints.ai_protocol = IPPROTO_TCP;
 
 		// Resolve the server address and port
-		iResult = getaddrinfo(ip_adr, DEFAULT_PORT, &hints, &result);
+		iResult = getaddrinfo(ip_adr, DEFAULT_PORT, &m_hints, &m_pResult);
 		if (iResult != 0) {
 			std::cout << "getaddrinfo failed with error: " << iResult << "\n";
 			WSACleanup();
@@ -231,37 +231,37 @@ int ClientSocketHelper::Initialize(const char* ip_adr)
 	}
 }
 
-int ClientSocketHelper::Connect()
+int CClientSocketHelper::Connect()
 {
 	try
 	{
 		// Attempt to connect to an address until one succeeds
 		int iResult = 0;
 
-		for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
+		for (m_pAdrInfo = m_pResult; m_pAdrInfo != NULL; m_pAdrInfo = m_pAdrInfo->ai_next) {
 
 			// Create a SOCKET for connecting to server
-			ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
-				ptr->ai_protocol);
-			if (ConnectSocket == INVALID_SOCKET) {
+			m_connectSocket = socket(m_pAdrInfo->ai_family, m_pAdrInfo->ai_socktype,
+				m_pAdrInfo->ai_protocol);
+			if (m_connectSocket == INVALID_SOCKET) {
 				std::cout << "socket failed with error: " << WSAGetLastError() << "\n";
 				WSACleanup();
 				return iResult;
 			}
 
 			// Connect to server.
-			iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+			iResult = connect(m_connectSocket, m_pAdrInfo->ai_addr, (int)m_pAdrInfo->ai_addrlen);
 			if (iResult == SOCKET_ERROR) {
-				closesocket(ConnectSocket);
-				ConnectSocket = INVALID_SOCKET;
+				closesocket(m_connectSocket);
+				m_connectSocket = INVALID_SOCKET;
 				continue;
 			}
 			break;
 		}
 
-		freeaddrinfo(result);
+		freeaddrinfo(m_pResult);
 
-		if (ConnectSocket == INVALID_SOCKET) {
+		if (m_connectSocket == INVALID_SOCKET) {
 			std::cout << "Unable to connect to server!\n";
 			WSACleanup();
 			return iResult;
@@ -275,15 +275,15 @@ int ClientSocketHelper::Connect()
 	}
 }
 
-int ClientSocketHelper::Send() // to do pass data as parameter
+int CClientSocketHelper::Send() // to do pass data as parameter
 {
 	try
 	{
 		// Send an initial buffer
-		int iResult = send(ConnectSocket, sendbuf.c_str(), (int)strlen(sendbuf.c_str()), 0);
+		int iResult = send(m_connectSocket, m_sSendBuf.c_str(), (int)strlen(m_sSendBuf.c_str()), 0);
 		if (iResult == SOCKET_ERROR) {
 			std::cout << "send failed with error: " << WSAGetLastError() << "\n";
-			closesocket(ConnectSocket);
+			closesocket(m_connectSocket);
 			WSACleanup();
 			return iResult;
 		}
@@ -297,7 +297,7 @@ int ClientSocketHelper::Send() // to do pass data as parameter
 	}
 }
 
-void ClientSocketHelper::Receive()
+void CClientSocketHelper::Receive()
 {
 	try
 	{
@@ -305,7 +305,7 @@ void ClientSocketHelper::Receive()
 		int iResult = 0;
 		char recvbuf[DEFAULT_BUFLEN];
 		do {
-			iResult = recv(ConnectSocket, recvbuf, DEFAULT_BUFLEN, 0);
+			iResult = recv(m_connectSocket, recvbuf, DEFAULT_BUFLEN, 0);
 			if (iResult > 0)
 				std::cout << "Bytes received: " << iResult << "\n";
 			else if (iResult == 0)
@@ -320,15 +320,15 @@ void ClientSocketHelper::Receive()
 	}
 }
 
-int ClientSocketHelper::Shutdown()
+int CClientSocketHelper::Shutdown()
 {
 	try
 	{
 		// shutdown the connection since no more data will be sent
-		int iResult = shutdown(ConnectSocket, SD_SEND);
+		int iResult = shutdown(m_connectSocket, SD_SEND);
 		if (iResult == SOCKET_ERROR) {
 			std::cout << "shutdown failed with error: " << WSAGetLastError() << "\n";
-			closesocket(ConnectSocket);
+			closesocket(m_connectSocket);
 			WSACleanup();
 			return iResult;
 		}

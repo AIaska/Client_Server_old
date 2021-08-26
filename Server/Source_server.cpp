@@ -1,10 +1,10 @@
-#include "../Shared/Socket_utils/SocketHelper.h" 
+#include "../shared/socket_utils/socket_helper_wnd.h" 
 
 int main()
 {
-    ServerSocketHelper socket_helper;
+    CServerSocketHelper socket_helper;
 
-    socket_helper.Initialize();
+    socket_helper.Init();
     socket_helper.Listen();
     socket_helper.Accept();
     socket_helper.Receive();

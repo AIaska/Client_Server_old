@@ -41,8 +41,8 @@ public:
 	int Init();
 	int Listen();
 	bool Accept();
-	int Receive();
-	bool Send(char bufData[DEFAULT_BUFLEN], int iResult);
+	int Receive(std::string& received);
+	int Send(const std::string& msg, const int numOfBytes);
 	int Shutdown();
 
 private:
@@ -57,16 +57,15 @@ public:
 	CClientSocketHelper();
 	~CClientSocketHelper();
 
-	int Init(const char* ip_adr);
+	int Init(const char* ip_adr); // TO DO change type 
 	int Connect();
-	int Send();
+	int Send(const std::string& msg);
 	void Receive();	
 	int Shutdown();
 
 private:
 	SOCKET m_connectSocket = INVALID_SOCKET;
 	struct addrinfo* m_pAdrInfo = nullptr;
-	const std::string m_sSendBuf = "this is a test";
 };
 
 #endif // _SOCKET_HELPER_WND_H_INCLUDED_

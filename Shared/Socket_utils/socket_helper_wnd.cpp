@@ -110,31 +110,32 @@ bool CServerSocketHelper::Accept()
 	}
 }
 
-int CServerSocketHelper::Receive()
+int CServerSocketHelper::Receive(std::string& received)
 {
 	try
 	{
 		// Receive until the peer shuts down the connection
 		int iResult = 0;
 		char recvbuf[DEFAULT_BUFLEN];
-		do {
+		//do {
 			iResult = recv(m_clientSocket, recvbuf, DEFAULT_BUFLEN, 0);
 			if (iResult > 0) {
 				std::cout << "Bytes received: " << iResult << "\n";
+				std::cout << "iResult: " << iResult << '\n';
 
-				// Echo the buffer back to the sender
-				Send(recvbuf, iResult);
+				received = recvbuf;
+				received = received.substr(0, iResult);
 			}
 			else if (iResult == 0)
-				printf("Connection closing...\n");
+				std::cout << "No data received.\n";
 			else {
 				std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
-				closesocket(m_clientSocket);
+				closesocket(m_clientSocket); // should we retry rather than close the socket?
 				WSACleanup();
 				return iResult;
 			}
 
-		} while (iResult > 0);
+		//} while (iResult > 0);
 
 		return iResult;
 	}
@@ -144,20 +145,20 @@ int CServerSocketHelper::Receive()
 	}
 }
 
-bool CServerSocketHelper::Send(char bufData[DEFAULT_BUFLEN], int iResult)
+int CServerSocketHelper::Send(const std::string& msg, const int numOfBytes)
 {
 	try
 	{
-		m_iSendResult = send(m_clientSocket, bufData, iResult, 0);
-		if (m_iSendResult == SOCKET_ERROR) {
+		int iSendResult = send(m_clientSocket, msg.c_str(), numOfBytes, 0);
+		if (iSendResult == SOCKET_ERROR) {
 			std::cout << "send failed with error: " << WSAGetLastError() << "\n";
-			closesocket(m_clientSocket);
+			closesocket(m_clientSocket); // or retry?
 			WSACleanup();
 			return false;
 		}
 
-		printf("Bytes sent: %d\n", m_iSendResult);
-		return true;
+		printf("Bytes sent: %d\n", iSendResult);
+		return iSendResult;
 	}
 	catch (const std::exception& ex)
 	{
@@ -275,15 +276,15 @@ int CClientSocketHelper::Connect()
 	}
 }
 
-int CClientSocketHelper::Send() // to do pass data as parameter
+int CClientSocketHelper::Send(const std::string& msg) // to do pass data as parameter
 {
 	try
 	{
 		// Send an initial buffer
-		int iResult = send(m_connectSocket, m_sSendBuf.c_str(), (int)strlen(m_sSendBuf.c_str()), 0);
+		int iResult = send(m_connectSocket, msg.c_str(), (int)strlen(msg.c_str()), 0);
 		if (iResult == SOCKET_ERROR) {
 			std::cout << "send failed with error: " << WSAGetLastError() << "\n";
-			closesocket(m_connectSocket);
+			closesocket(m_connectSocket); // close or retry?
 			WSACleanup();
 			return iResult;
 		}
@@ -304,7 +305,7 @@ void CClientSocketHelper::Receive()
 		// Receive until the peer closes the connection
 		int iResult = 0;
 		char recvbuf[DEFAULT_BUFLEN];
-		do {
+		//do {
 			iResult = recv(m_connectSocket, recvbuf, DEFAULT_BUFLEN, 0);
 			if (iResult > 0)
 				std::cout << "Bytes received: " << iResult << "\n";
@@ -312,7 +313,7 @@ void CClientSocketHelper::Receive()
 				std::cout << "Connection closed\n";
 			else
 				std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
-		} while (iResult > 0);
+		//} while (iResult > 0);
 	}
 	catch (const std::exception& ex)
 	{

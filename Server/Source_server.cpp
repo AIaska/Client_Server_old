@@ -7,7 +7,18 @@ int main()
     socket_helper.Init();
     socket_helper.Listen();
     socket_helper.Accept();
-    socket_helper.Receive();
+    std::string res = "";
+
+    for (int i = 0; i < 5; i++)
+    {
+        socket_helper.Receive(res);
+        //std::cout << "res " << res << " length " << res.length() << '\n';
+        socket_helper.Send(res, res.length());
+    }
+
+    // shutdown on command
+    int i;
+    std::cin >> i;
     socket_helper.Shutdown();
     
     return 0;

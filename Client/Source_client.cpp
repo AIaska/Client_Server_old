@@ -13,9 +13,14 @@ int main(int argc, char** argv)
 
     socket_helper.Init(argv[2]);
     socket_helper.Connect();
-    socket_helper.Send();
+
+    for (int i = 0; i < 5; i++)
+    {
+        socket_helper.Send("test msg");
+        socket_helper.Receive();
+    }
+
     socket_helper.Shutdown();
-    socket_helper.Receive();
 
     return 0;
 }

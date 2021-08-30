@@ -45,4 +45,5 @@ ipch/
 
 # Debug files
 *.pdb
+
 *.idb

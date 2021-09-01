@@ -20,6 +20,8 @@
 #define DEFAULT_BUFLEN 512 // will be read from config
 #define DEFAULT_PORT "27015"
 
+using namespace std;
+
 class CSocketHelper
 {
 public:
@@ -41,8 +43,8 @@ public:
 	int Init();
 	int Listen();
 	bool Accept();
-	int Receive(std::string& sReceived);
-	int Send(const std::string& sMsg, const int icNumOfBytes);
+	int Receive(string& sReceived);
+	int Send(const string& sMsg, const int icNumOfBytes);
 	int Shutdown();
 
 private:
@@ -59,7 +61,7 @@ public:
 
 	int Init(const char* szcIpAdr); // TO DO change type 
 	int Connect();
-	int Send(const std::string& sMsg);
+	int Send(const string& sMsg);
 	void Receive();	
 	int Shutdown();
 

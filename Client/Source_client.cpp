@@ -1,26 +1,35 @@
 #ifdef _WIN64
-#include "../shared/socket_utils/socket_helper_wnd.h"
+#include "socket_utils/socket_helper_wnd.h"
 #endif
+
+using namespace std;
 
 int main(int argc, char** argv)
 {
-    if (argc != 2) {
-        printf("usage: %s server-name\n", argv[0]);
-        return 1;
-    }
-
-    CClientSocketHelper socket_helper;
-
-    socket_helper.Init(argv[2]);
-    socket_helper.Connect();
-
-    for (int i = 0; i < 5; i++)
+    try
     {
-        socket_helper.Send("test msg");
-        socket_helper.Receive();
-    }
+        if (argc != 2) {
+            printf("usage: %s server-name\n", argv[0]);
+            //return 1;
+        }
 
-    socket_helper.Shutdown();
+        CClientSocketHelper socketHelper;
+
+        socketHelper.Init("127.0.0.1"/*argv[2]*/);
+        socketHelper.Connect();
+
+        for (int i = 0; i < 5; i++)
+        {
+            socketHelper.Send("test msg");
+            socketHelper.Receive();
+        }
+
+        socketHelper.Shutdown();
+    }
+    catch (const exception& ex)
+    {
+        cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
+    }
 
     return 0;
 }

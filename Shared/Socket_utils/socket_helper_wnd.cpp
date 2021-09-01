@@ -18,7 +18,7 @@ int CServerSocketHelper::Init()
 		// Init Winsock
 		int iResult = WSAStartup(MAKEWORD(2, 2), &m_wsaData);
 		if (iResult != 0) {
-			std::cout << "WSAStartup failed with error: %d\n" << iResult << "\n";
+			cout << "WSAStartup failed with error: %d\n" << iResult << "\n";
 			return iResult;
 		}
 
@@ -31,16 +31,16 @@ int CServerSocketHelper::Init()
 		// Resolve the server address and port
 		iResult = getaddrinfo(NULL, DEFAULT_PORT, &m_hints, &m_pResult);
 		if (iResult != 0) {
-			std::cout << "getaddrinfo failed with error: " << iResult << "\n";
+			cout << "getaddrinfo failed with error: " << iResult << "\n";
 			WSACleanup();
 			return iResult;
 		}
 
 		return iResult;
 	}
-	catch (const std::exception& ex)
+	catch (const exception& ex)
 	{
-		std::cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
+		cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
 	}
 }
 
@@ -50,7 +50,7 @@ int CServerSocketHelper::Listen()
 	{
 		m_listenerSocket = socket(m_pResult->ai_family, m_pResult->ai_socktype, m_pResult->ai_protocol);
 		if (m_listenerSocket == INVALID_SOCKET) {
-			std::cout << "socket failed with error: " << WSAGetLastError() << "\n";
+			cout << "socket failed with error: " << WSAGetLastError() << "\n";
 			freeaddrinfo(m_pResult);
 			WSACleanup();
 			return false;
@@ -59,7 +59,7 @@ int CServerSocketHelper::Listen()
 		// Setup the TCP listening socket
 		int iResult = bind(m_listenerSocket, m_pResult->ai_addr, (int)m_pResult->ai_addrlen);
 		if (iResult == SOCKET_ERROR) {
-			std::cout << "bind failed with error: " << WSAGetLastError() << "\n";
+			cout << "bind failed with error: " << WSAGetLastError() << "\n";
 			freeaddrinfo(m_pResult);
 			closesocket(m_listenerSocket);
 			WSACleanup();
@@ -70,7 +70,7 @@ int CServerSocketHelper::Listen()
 
 		iResult = listen(m_listenerSocket, SOMAXCONN);
 		if (iResult == SOCKET_ERROR) {
-			std::cout << "listen failed with error: " << WSAGetLastError() << "\n";
+			cout << "listen failed with error: " << WSAGetLastError() << "\n";
 			closesocket(m_listenerSocket);
 			WSACleanup();
 			return iResult;
@@ -78,9 +78,9 @@ int CServerSocketHelper::Listen()
 
 		return iResult;
 	}
-	catch (const std::exception& ex)
+	catch (const exception& ex)
 	{
-		std::cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
+		cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
 	}
 }
 
@@ -91,7 +91,7 @@ bool CServerSocketHelper::Accept()
 		// Permit an incoming connection attempt on a socket
 		m_clientSocket = accept(m_listenerSocket, NULL, NULL);
 		if (m_clientSocket == INVALID_SOCKET) {
-			std::cout << "accept failed with error: " << WSAGetLastError() << "\n";
+			cout << "accept failed with error: " << WSAGetLastError() << "\n";
 			closesocket(m_listenerSocket);
 			WSACleanup();
 			return false;
@@ -102,13 +102,13 @@ bool CServerSocketHelper::Accept()
 
 		return true;
 	}
-	catch (const std::exception& ex)
+	catch (const exception& ex)
 	{
-		std::cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
+		cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
 	}
 }
 
-int CServerSocketHelper::Receive(std::string& sReceived)
+int CServerSocketHelper::Receive(string& sReceived)
 {
 	try
 	{
@@ -117,16 +117,16 @@ int CServerSocketHelper::Receive(std::string& sReceived)
 
 		iResult = recv(m_clientSocket, szRecvBuf, DEFAULT_BUFLEN, 0);
 		if (iResult > 0) {
-			std::cout << "Bytes received: " << iResult << "\n";
-			std::cout << "iResult: " << iResult << '\n';
+			cout << "Bytes received: " << iResult << "\n";
+			cout << "iResult: " << iResult << '\n';
 
 			sReceived = szRecvBuf;
 			sReceived = sReceived.substr(0, iResult);
 		}
 		else if (iResult == 0)
-			std::cout << "No data received.\n";
+			cout << "No data received.\n";
 		else {
-			std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
+			cout << "recv failed with error: " << WSAGetLastError() << "\n";
 			closesocket(m_clientSocket);
 			WSACleanup();
 			return iResult;
@@ -134,19 +134,19 @@ int CServerSocketHelper::Receive(std::string& sReceived)
 
 		return iResult;
 	}
-	catch (const std::exception& ex)
+	catch (const exception& ex)
 	{
-		std::cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
+		cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
 	}
 }
 
-int CServerSocketHelper::Send(const std::string& sMsg, const int icNumOfBytes)
+int CServerSocketHelper::Send(const string& sMsg, const int icNumOfBytes)
 {
 	try
 	{
 		int iSendResult = send(m_clientSocket, sMsg.c_str(), icNumOfBytes, 0);
 		if (iSendResult == SOCKET_ERROR) {
-			std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+			cout << "send failed with error: " << WSAGetLastError() << "\n";
 			closesocket(m_clientSocket);
 			WSACleanup();
 			return false;
@@ -155,9 +155,9 @@ int CServerSocketHelper::Send(const std::string& sMsg, const int icNumOfBytes)
 		printf("Bytes sent: %d\n", iSendResult);
 		return iSendResult;
 	}
-	catch (const std::exception& ex)
+	catch (const exception& ex)
 	{
-		std::cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
+		cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
 	}
 }
 
@@ -167,7 +167,7 @@ int CServerSocketHelper::Shutdown()
 	{
 		int iResult = shutdown(m_clientSocket, SD_SEND);
 		if (iResult == SOCKET_ERROR) {
-			std::cout << "shuwdown failed with error: " << WSAGetLastError() << "\n";
+			cout << "shutdown failed with error: " << WSAGetLastError() << "\n";
 			closesocket(m_clientSocket);
 			WSACleanup();
 			return iResult;
@@ -175,9 +175,9 @@ int CServerSocketHelper::Shutdown()
 
 		return iResult;
 	}
-	catch (const std::exception& ex)
+	catch (const exception& ex)
 	{
-		std::cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
+		cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
 	}
 }
 
@@ -201,7 +201,7 @@ int CClientSocketHelper::Init(const char* szcIpAdr)
 		// Init Winsock
 		int iResult = WSAStartup(MAKEWORD(2, 2), &m_wsaData);
 		if (iResult != 0) {
-			std::cout << "WSAStartup failed with error: " << iResult << "\n";
+			cout << "WSAStartup failed with error: " << iResult << "\n";
 			return iResult;
 		}
 
@@ -213,16 +213,16 @@ int CClientSocketHelper::Init(const char* szcIpAdr)
 		// Resolve the server address and port
 		iResult = getaddrinfo(szcIpAdr, DEFAULT_PORT, &m_hints, &m_pResult);
 		if (iResult != 0) {
-			std::cout << "getaddrinfo failed with error: " << iResult << "\n";
+			cout << "getaddrinfo failed with error: " << iResult << "\n";
 			WSACleanup();
 			return iResult;
 		}
 
 		return iResult;
 	}
-	catch (const std::exception& ex)
+	catch (const exception& ex)
 	{
-		std::cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
+		cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
 	}
 }
 
@@ -237,7 +237,7 @@ int CClientSocketHelper::Connect()
 			m_connectSocket = socket(m_pAdrInfo->ai_family, m_pAdrInfo->ai_socktype, m_pAdrInfo->ai_protocol);
 			if (m_connectSocket == INVALID_SOCKET)
 			{
-				std::cout << "socket failed with error: " << WSAGetLastError() << "\n";
+				cout << "socket failed with error: " << WSAGetLastError() << "\n";
 				WSACleanup();
 				return iResult;
 			}
@@ -255,26 +255,26 @@ int CClientSocketHelper::Connect()
 		freeaddrinfo(m_pResult);
 
 		if (m_connectSocket == INVALID_SOCKET) {
-			std::cout << "Unable to connect to server!\n";
+			cout << "Unable to connect to server!\n";
 			WSACleanup();
 			return iResult;
 		}
 
 		return iResult;
 	}
-	catch (const std::exception& ex)
+	catch (const exception& ex)
 	{
-		std::cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
+		cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
 	}
 }
 
-int CClientSocketHelper::Send(const std::string& sMsg)
+int CClientSocketHelper::Send(const string& sMsg)
 {
 	try
 	{
 		int iResult = send(m_connectSocket, sMsg.c_str(), (int)strlen(sMsg.c_str()), 0);
 		if (iResult == SOCKET_ERROR) {
-			std::cout << "send failed with error: " << WSAGetLastError() << "\n";
+			cout << "send failed with error: " << WSAGetLastError() << "\n";
 			closesocket(m_connectSocket);
 			WSACleanup();
 			return iResult;
@@ -283,9 +283,9 @@ int CClientSocketHelper::Send(const std::string& sMsg)
 		printf("Bytes Sent: %ld\n", iResult);
 		return iResult;
 	}
-	catch (const std::exception& ex)
+	catch (const exception& ex)
 	{
-		std::cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
+		cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
 	}
 }
 
@@ -297,15 +297,15 @@ void CClientSocketHelper::Receive()
 		char szRecvBuf[DEFAULT_BUFLEN];
 		iResult = recv(m_connectSocket, szRecvBuf, DEFAULT_BUFLEN, 0);
 		if (iResult > 0)
-			std::cout << "Bytes received: " << iResult << "\n";
+			cout << "Bytes received: " << iResult << "\n";
 		else if (iResult == 0)
-			std::cout << "Connection closed\n";
+			cout << "Connection closed\n";
 		else
-			std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
+			cout << "recv failed with error: " << WSAGetLastError() << "\n";
 	}
-	catch (const std::exception& ex)
+	catch (const exception& ex)
 	{
-		std::cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
+		cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
 	}
 }
 
@@ -315,7 +315,7 @@ int CClientSocketHelper::Shutdown()
 	{
 		int iResult = shutdown(m_connectSocket, SD_SEND);
 		if (iResult == SOCKET_ERROR) {
-			std::cout << "shutdown failed with error: " << WSAGetLastError() << "\n";
+			cout << "shutdown failed with error: " << WSAGetLastError() << "\n";
 			closesocket(m_connectSocket);
 			WSACleanup();
 			return iResult;
@@ -323,8 +323,8 @@ int CClientSocketHelper::Shutdown()
 
 		return iResult;
 	}
-	catch (const std::exception& ex)
+	catch (const exception& ex)
 	{
-		std::cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
+		cout << __FUNCTION__ << "threw exception: " << ex.what() << '\n';
 	}
 }

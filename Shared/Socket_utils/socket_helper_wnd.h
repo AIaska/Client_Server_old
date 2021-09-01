@@ -27,7 +27,7 @@ public:
 	virtual ~CSocketHelper() {};
 
 protected:
-	WSADATA wsaData; // info about the Windows Sockets implementation
+	WSADATA m_wsaData; // info about the Windows Sockets implementation
 	struct addrinfo* m_pResult = nullptr;
 	struct addrinfo m_hints;
 };
@@ -41,12 +41,12 @@ public:
 	int Init();
 	int Listen();
 	bool Accept();
-	int Receive(std::string& received);
-	int Send(const std::string& msg, const int numOfBytes);
+	int Receive(std::string& sReceived);
+	int Send(const std::string& sMsg, const int icNumOfBytes);
 	int Shutdown();
 
 private:
-	SOCKET m_listenSocket = INVALID_SOCKET;
+	SOCKET m_listenerSocket = INVALID_SOCKET;
 	SOCKET m_clientSocket = INVALID_SOCKET;
 	int m_iSendResult;
 };
@@ -57,9 +57,9 @@ public:
 	CClientSocketHelper();
 	~CClientSocketHelper();
 
-	int Init(const char* ip_adr); // TO DO change type 
+	int Init(const char* szcIpAdr); // TO DO change type 
 	int Connect();
-	int Send(const std::string& msg);
+	int Send(const std::string& sMsg);
 	void Receive();	
 	int Shutdown();
 

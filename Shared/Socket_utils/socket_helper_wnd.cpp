@@ -13,11 +13,10 @@ CServerSocketHelper::~CServerSocketHelper()
 
 int CServerSocketHelper::Init()
 {
-
 	try
 	{
 		// Init Winsock
-		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		int iResult = WSAStartup(MAKEWORD(2, 2), &m_wsaData);
 		if (iResult != 0) {
 			std::cout << "WSAStartup failed with error: %d\n" << iResult << "\n";
 			return iResult;
@@ -49,9 +48,8 @@ int CServerSocketHelper::Listen()
 {
 	try
 	{
-		// Create a SOCKET for connecting to server
-		m_listenSocket = socket(m_pResult->ai_family, m_pResult->ai_socktype, m_pResult->ai_protocol);
-		if (m_listenSocket == INVALID_SOCKET) {
+		m_listenerSocket = socket(m_pResult->ai_family, m_pResult->ai_socktype, m_pResult->ai_protocol);
+		if (m_listenerSocket == INVALID_SOCKET) {
 			std::cout << "socket failed with error: " << WSAGetLastError() << "\n";
 			freeaddrinfo(m_pResult);
 			WSACleanup();
@@ -59,21 +57,21 @@ int CServerSocketHelper::Listen()
 		}
 
 		// Setup the TCP listening socket
-		int iResult = bind(m_listenSocket, m_pResult->ai_addr, (int)m_pResult->ai_addrlen);
+		int iResult = bind(m_listenerSocket, m_pResult->ai_addr, (int)m_pResult->ai_addrlen);
 		if (iResult == SOCKET_ERROR) {
 			std::cout << "bind failed with error: " << WSAGetLastError() << "\n";
 			freeaddrinfo(m_pResult);
-			closesocket(m_listenSocket);
+			closesocket(m_listenerSocket);
 			WSACleanup();
 			return iResult;
 		}
 
 		freeaddrinfo(m_pResult);
 
-		iResult = listen(m_listenSocket, SOMAXCONN);
+		iResult = listen(m_listenerSocket, SOMAXCONN);
 		if (iResult == SOCKET_ERROR) {
 			std::cout << "listen failed with error: " << WSAGetLastError() << "\n";
-			closesocket(m_listenSocket);
+			closesocket(m_listenerSocket);
 			WSACleanup();
 			return iResult;
 		}
@@ -91,16 +89,16 @@ bool CServerSocketHelper::Accept()
 	try
 	{
 		// Permit an incoming connection attempt on a socket
-		m_clientSocket = accept(m_listenSocket, NULL, NULL);
+		m_clientSocket = accept(m_listenerSocket, NULL, NULL);
 		if (m_clientSocket == INVALID_SOCKET) {
 			std::cout << "accept failed with error: " << WSAGetLastError() << "\n";
-			closesocket(m_listenSocket);
+			closesocket(m_listenerSocket);
 			WSACleanup();
 			return false;
 		}
 
 		// No longer need server socket
-		closesocket(m_listenSocket); // TO DO check
+		closesocket(m_listenerSocket); // TO DO check
 
 		return true;
 	}
@@ -110,32 +108,29 @@ bool CServerSocketHelper::Accept()
 	}
 }
 
-int CServerSocketHelper::Receive(std::string& received)
+int CServerSocketHelper::Receive(std::string& sReceived)
 {
 	try
 	{
-		// Receive until the peer shuts down the connection
 		int iResult = 0;
-		char recvbuf[DEFAULT_BUFLEN];
-		//do {
-			iResult = recv(m_clientSocket, recvbuf, DEFAULT_BUFLEN, 0);
-			if (iResult > 0) {
-				std::cout << "Bytes received: " << iResult << "\n";
-				std::cout << "iResult: " << iResult << '\n';
+		char szRecvBuf[DEFAULT_BUFLEN];
 
-				received = recvbuf;
-				received = received.substr(0, iResult);
-			}
-			else if (iResult == 0)
-				std::cout << "No data received.\n";
-			else {
-				std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
-				closesocket(m_clientSocket); // should we retry rather than close the socket?
-				WSACleanup();
-				return iResult;
-			}
+		iResult = recv(m_clientSocket, szRecvBuf, DEFAULT_BUFLEN, 0);
+		if (iResult > 0) {
+			std::cout << "Bytes received: " << iResult << "\n";
+			std::cout << "iResult: " << iResult << '\n';
 
-		//} while (iResult > 0);
+			sReceived = szRecvBuf;
+			sReceived = sReceived.substr(0, iResult);
+		}
+		else if (iResult == 0)
+			std::cout << "No data received.\n";
+		else {
+			std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
+			closesocket(m_clientSocket);
+			WSACleanup();
+			return iResult;
+		}
 
 		return iResult;
 	}
@@ -145,14 +140,14 @@ int CServerSocketHelper::Receive(std::string& received)
 	}
 }
 
-int CServerSocketHelper::Send(const std::string& msg, const int numOfBytes)
+int CServerSocketHelper::Send(const std::string& sMsg, const int icNumOfBytes)
 {
 	try
 	{
-		int iSendResult = send(m_clientSocket, msg.c_str(), numOfBytes, 0);
+		int iSendResult = send(m_clientSocket, sMsg.c_str(), icNumOfBytes, 0);
 		if (iSendResult == SOCKET_ERROR) {
 			std::cout << "send failed with error: " << WSAGetLastError() << "\n";
-			closesocket(m_clientSocket); // or retry?
+			closesocket(m_clientSocket);
 			WSACleanup();
 			return false;
 		}
@@ -170,7 +165,6 @@ int CServerSocketHelper::Shutdown()
 {
 	try
 	{
-		// shutdown the connection since we're done
 		int iResult = shutdown(m_clientSocket, SD_SEND);
 		if (iResult == SOCKET_ERROR) {
 			std::cout << "shuwdown failed with error: " << WSAGetLastError() << "\n";
@@ -200,12 +194,12 @@ CClientSocketHelper::~CClientSocketHelper()
 	WSACleanup();
 }
 
-int CClientSocketHelper::Init(const char* ip_adr)
+int CClientSocketHelper::Init(const char* szcIpAdr)
 {
 	try
 	{
 		// Init Winsock
-		int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		int iResult = WSAStartup(MAKEWORD(2, 2), &m_wsaData);
 		if (iResult != 0) {
 			std::cout << "WSAStartup failed with error: " << iResult << "\n";
 			return iResult;
@@ -217,7 +211,7 @@ int CClientSocketHelper::Init(const char* ip_adr)
 		m_hints.ai_protocol = IPPROTO_TCP;
 
 		// Resolve the server address and port
-		iResult = getaddrinfo(ip_adr, DEFAULT_PORT, &m_hints, &m_pResult);
+		iResult = getaddrinfo(szcIpAdr, DEFAULT_PORT, &m_hints, &m_pResult);
 		if (iResult != 0) {
 			std::cout << "getaddrinfo failed with error: " << iResult << "\n";
 			WSACleanup();
@@ -236,23 +230,21 @@ int CClientSocketHelper::Connect()
 {
 	try
 	{
-		// Attempt to connect to an address until one succeeds
 		int iResult = 0;
 
-		for (m_pAdrInfo = m_pResult; m_pAdrInfo != NULL; m_pAdrInfo = m_pAdrInfo->ai_next) {
-
-			// Create a SOCKET for connecting to server
-			m_connectSocket = socket(m_pAdrInfo->ai_family, m_pAdrInfo->ai_socktype,
-				m_pAdrInfo->ai_protocol);
-			if (m_connectSocket == INVALID_SOCKET) {
+		for (m_pAdrInfo = m_pResult; m_pAdrInfo != NULL; m_pAdrInfo = m_pAdrInfo->ai_next)
+		{
+			m_connectSocket = socket(m_pAdrInfo->ai_family, m_pAdrInfo->ai_socktype, m_pAdrInfo->ai_protocol);
+			if (m_connectSocket == INVALID_SOCKET)
+			{
 				std::cout << "socket failed with error: " << WSAGetLastError() << "\n";
 				WSACleanup();
 				return iResult;
 			}
 
-			// Connect to server.
 			iResult = connect(m_connectSocket, m_pAdrInfo->ai_addr, (int)m_pAdrInfo->ai_addrlen);
-			if (iResult == SOCKET_ERROR) {
+			if (iResult == SOCKET_ERROR)
+			{
 				closesocket(m_connectSocket);
 				m_connectSocket = INVALID_SOCKET;
 				continue;
@@ -276,15 +268,14 @@ int CClientSocketHelper::Connect()
 	}
 }
 
-int CClientSocketHelper::Send(const std::string& msg) // to do pass data as parameter
+int CClientSocketHelper::Send(const std::string& sMsg)
 {
 	try
 	{
-		// Send an initial buffer
-		int iResult = send(m_connectSocket, msg.c_str(), (int)strlen(msg.c_str()), 0);
+		int iResult = send(m_connectSocket, sMsg.c_str(), (int)strlen(sMsg.c_str()), 0);
 		if (iResult == SOCKET_ERROR) {
 			std::cout << "send failed with error: " << WSAGetLastError() << "\n";
-			closesocket(m_connectSocket); // close or retry?
+			closesocket(m_connectSocket);
 			WSACleanup();
 			return iResult;
 		}
@@ -302,18 +293,15 @@ void CClientSocketHelper::Receive()
 {
 	try
 	{
-		// Receive until the peer closes the connection
 		int iResult = 0;
-		char recvbuf[DEFAULT_BUFLEN];
-		//do {
-			iResult = recv(m_connectSocket, recvbuf, DEFAULT_BUFLEN, 0);
-			if (iResult > 0)
-				std::cout << "Bytes received: " << iResult << "\n";
-			else if (iResult == 0)
-				std::cout << "Connection closed\n";
-			else
-				std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
-		//} while (iResult > 0);
+		char szRecvBuf[DEFAULT_BUFLEN];
+		iResult = recv(m_connectSocket, szRecvBuf, DEFAULT_BUFLEN, 0);
+		if (iResult > 0)
+			std::cout << "Bytes received: " << iResult << "\n";
+		else if (iResult == 0)
+			std::cout << "Connection closed\n";
+		else
+			std::cout << "recv failed with error: " << WSAGetLastError() << "\n";
 	}
 	catch (const std::exception& ex)
 	{
@@ -325,7 +313,6 @@ int CClientSocketHelper::Shutdown()
 {
 	try
 	{
-		// shutdown the connection since no more data will be sent
 		int iResult = shutdown(m_connectSocket, SD_SEND);
 		if (iResult == SOCKET_ERROR) {
 			std::cout << "shutdown failed with error: " << WSAGetLastError() << "\n";

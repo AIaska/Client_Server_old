@@ -1,5 +1,9 @@
 #include "socket_helper_wnd.h"
 
+#include "rapidxml-1.13/rapidxml_ext.hpp"
+
+using namespace rapidxml;
+
 CServerSocketHelper::CServerSocketHelper()
 {
 
@@ -298,6 +302,11 @@ void CClientSocketHelper::Receive()
 		int iResult = 0;
 		char szRecvBuf[DEFAULT_BUFLEN];
 		iResult = recv(m_connectSocket, szRecvBuf, DEFAULT_BUFLEN, 0);
+
+		xml_document<> XMLDoc;
+		XMLDoc.parse<0>(szRecvBuf);
+		cout << "received response:\n" << XMLDoc;
+
 		if (iResult > 0)
 			cout << "Bytes received: " << iResult << "\n";
 		else if (iResult == 0)
